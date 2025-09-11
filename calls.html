@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatApp Video Call</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --secondary: #10b981;
+      --danger: #ef4444;
+      --dark-1: #1f2937;
+      --dark-2: #111827;
+      --dark-3: #374151;
+      --light-1: #f9fafb;
+      --light-2: #e5e7eb;
+      --radius: 12px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--dark-2) 0%, var(--dark-1) 100%);
+      color: var(--light-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      flex: 1;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding: 20px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      font-weight: 400;
+    }
+    
+    .call-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 1000px;
+    }
+    
+    .video-container {
+      position: relative;
+      background-color: var(--dark-3);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      aspect-ratio: 16/9;
+    }
+    
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background-color: #000;
+      border-radius: var(--radius);
+      transition: var(--transition);
+    }
+    
+    #localVideo {
+      transform: scaleX(-1); /* Mirror front camera */
+    }
+    
+    .video-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .video-label {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    .status-active {
+      background-color: var(--secondary);
+    }
+    
+    .status-inactive {
+      background-color: var(--danger);
+    }
+    
+    .status-connecting {
+      background-color: #f59e0b;
+    }
+    
+    .video-controls {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .video-control-btn {
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .video-control-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+    
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .control-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      background-color: var(--dark-3);
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+    
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .control-btn:active {
+      transform: translateY(0);
+    }
+    
+    .control-btn.end-call {
+      background-color: var(--danger);
+    }
+    
+    .control-btn.mute-audio {
+      background-color: var(--dark-3);
+    }
+    
+    .control-btn.mute-video {
+      background-color: var(--dark-3);
+    }
+    
+    .control-btn.active {
+      background-color: var(--primary);
+    }
+    
+    .call-id-section {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 24px;
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 500px;
+      margin-top: 16px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .call-id-section h3 {
+      margin-bottom: 16px;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+    
+    .call-id-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .input-group {
+      position: relative;
+    }
+    
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 1rem;
+      background-color: rgba(255, 255, 255, 0.08);
+      color: white;
+      transition: var(--transition);
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: transparent;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      transform: translateY(-1px);
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    .status-container {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: var(--radius);
+      background-color: rgba(255, 255, 255, 0.05);
+      text-align: center;
+      font-size: 1rem;
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .call-timer {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-left: 8px;
+      color: var(--secondary);
+    }
+    
+    .call-id-display {
+      margin-top: 16px;
+      padding: 12px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 20px;
+      background-color: var(--dark-3);
+      color: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      opacity: 1;
+    }
+    
+    /* Full-screen styles */
+    .video-container.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 999;
+      border-radius: 0;
+      aspect-ratio: unset;
+    }
+    
+    .video-container.fullscreen video {
+      border-radius: 0;
+    }
+    
+    .video-container.fullscreen .video-controls .expand-btn i::before {
+      content: "\f066"; /* compress icon */
+    }
+    
+    .main-controls-hidden .controls {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .main-controls-hidden .call-id-section,
+    .main-controls-hidden .status-container {
+      opacity: 0.3;
+    }
+    
+    @media (max-width: 768px) {
+      .call-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .btn-group {
+        flex-direction: column;
+      }
+      
+      .controls {
+        gap: 12px;
+      }
+      
+      .control-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 12px;
+      }
+      
+      header {
+        padding: 12px;
+      }
+      
+      .call-id-section {
+        padding: 20px;
+      }
+    }
+    
+    /* Improved Footer Styles */
+    footer {
+      width: 100%;
+      max-width: 500px;
+      margin-top: auto;
+      padding: 16px 0 8px;
+      background: rgba(17, 24, 39, 0.8);
+      border-radius: 20px 20px 0 0;
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      position: fixed;
+      bottom: 0;
+    }
+    
+    .footer-tabs {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 10px;
+    }
+    
+    .footer-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      border-radius: 12px;
+      transition: var(--transition);
+      min-width: 70px;
+    }
+    
+    .footer-tab:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .footer-tab.active {
+      background: rgba(99, 102, 241, 0.15);
+    }
+    
+    .footer-tab.active h5 {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .footer-tab img {
+      width: 24px;
+      height: 24px;
+      margin-bottom: 6px;
+      filter: brightness(0) invert(1);
+      transition: var(--transition);
+    }
+    
+    .footer-tab.active img {
+      filter: brightness(0) saturate(100%) invert(44%) sepia(86%) saturate(1253%) hue-rotate(212deg) brightness(97%) contrast(94%);
+    }
+    
+    .footer-tab h5 {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin: 0;
+      transition: var(--transition);
+    }
+    
+    /* Pulse animation for active call tab */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .footer-tab.active.call-active {
+      animation: pulse 2s infinite;
+    }
+    
+    .footer-tab.active.call-active h5 {
+      color: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-video"></i>
+        </div>
+        <h1>ChatApp Video</h1>
+      </div>
+      <p class="subtitle">High-quality video calls with end-to-end encryption</p>
+    </header>
+    
+    <div class="call-container">
+      <div class="video-container" id="remoteVideoContainer">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="video-overlay">
+          <span class="video-label">
+            <span class="status-indicator status-connecting"></span>
+            Contact Name
+          </span>
+          <div class="video-controls">
+            <button class="video-control-btn expand-btn" onclick="toggleFullscreen('remoteVideoContainer')">
+              <i class="fas fa-expand"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="video-container" id="localVideoContainer">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <div class="video-overlay">
+          <span class="video-label">
+            <span class="status-indicator status-active"></span>
+            You
+          </span>
+          <div class="video-controls">
+            <button class="video-control-btn expand-btn" onclick="toggleFullscreen('localVideoContainer')">
+              <i class="fas fa-expand"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <button class="control-btn mute-audio active" id="toggleAudio">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <button class="control-btn end-call" id="endCall">
+        <i class="fas fa-phone-slash"></i>
+      </button>
+      <button class="control-btn mute-video active" id="toggleVideo">
+        <i class="fas fa-video"></i>
+      </button>
+    </div>
+    
+    <div class="call-id-section">
+      <h3>Start or join a call</h3>
+      <div class="call-id-form">
+        <div class="input-group">
+          <input type="text" id="callIdInput" placeholder="Enter call ID to join">
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="startCall()">
+            <i class="fas fa-phone"></i>New Call
+          </button>
+          <button class="btn btn-secondary" onclick="answerCall()">
+            <i class="fas fa-phone-alt"></i>Join Call
+          </button>
+        </div>
+        <div class="call-id-display">
+          <i class="fas fa-hashtag"></i>
+          <span id="currentCallId">Not in a call</span>
+          <button class="copy-btn" id="copyCallId" title="Copy call ID">
+            <i class="far fa-copy"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="status-container">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <span>Call Status: <span id="callStatus">Ready to connect</span></span>
+      <span class="call-timer" id="callTimer"></span>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Call ID copied to clipboard!</div>
+  
+  <footer id="app-footer">
+    <div class="footer-tabs">
+      <button class="footer-tab active" onclick="toChats()">
+        <img src="https://cdn-icons-png.flaticon.com/128/12595/12595735.png" alt="Chats">
+        <h5>Chats</h5>
+      </button>
+      <button class="footer-tab" onclick="toUpdates()">
+        <img src="https://cdn-icons-png.flaticon.com/128/12595/12595753.png" alt="Updates">
+        <h5>Updates</h5>
+      </button>
+      <button class="footer-tab active call-active" onclick="toCalls()">
+        <img src="https://cdn-icons-png.flaticon.com/128/1077/1077063.png" alt="Calls">
+        <h5>Calls</h5>
+      </button>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEfkHrGJR82b-Ztdeyq0yURgv5d7UVhrc",
+      authDomain: "chattapp-b2abe.firebaseapp.com",
+      databaseURL: "https://chattapp-b2abe-default-rtdb.firebaseio.com",
+      projectId: "chattapp-b2abe",
+      storageBucket: "chattapp-b2abe.firebasestorage.app",
+      messagingSenderId: "479823967484",
+      appId: "1:479823967484:web:f8ce65ef5e20aa43aad379",
+      measurementId: "G-S4J69CW2LJ"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // WebRTC variables
+    let pc = new RTCPeerConnection();
+    let localStream = null;
+    let remoteStream = null;
+    let callDoc = null;
+    let callStartTime = null;
+    let callTimerInterval = null;
+    let isFullScreen = false;
+    let currentFullScreenElement = null;
+    
+    // DOM elements
+    const localVideo = document.getElementById("localVideo");
+    const remoteVideo = document.getElementById("remoteVideo");
+    const callIdInput = document.getElementById("callIdInput");
+    const currentCallId = document.getElementById("currentCallId");
+    const callStatus = document.getElementById("callStatus");
+    const callTimer = document.getElementById("callTimer");
+    const toggleAudioBtn = document.getElementById("toggleAudio");
+    const toggleVideoBtn = document.getElementById("toggleVideo");
+    const endCallBtn = document.getElementById("endCall");
+    const copyCallIdBtn = document.getElementById("copyCallId");
+    const toast = document.getElementById("toast");
+    const remoteVideoContainer = document.getElementById("remoteVideoContainer");
+    const localVideoContainer = document.getElementById("localVideoContainer");
+    const container = document.querySelector('.container');
+    
+    function toChats() {
+      window.location.href="chat.html";
+    }
+    
+    function toUpdates() {
+      window.location.href="status.html";
+    }
+    
+    function toCalls() {
+      window.location.href="calls.html";
+    }
+
+    // Toggle fullscreen for video
+    function toggleFullscreen(containerId) {
+      const container = document.getElementById(containerId);
+      
+      if (container.classList.contains('fullscreen')) {
+        // Exit fullscreen
+        container.classList.remove('fullscreen');
+        document.body.classList.remove('main-controls-hidden');
+        isFullScreen = false;
+        currentFullScreenElement = null;
+      } else {
+        // Enter fullscreen
+        if (currentFullScreenElement) {
+          currentFullScreenElement.classList.remove('fullscreen');
+        }
+        
+        container.classList.add('fullscreen');
+        document.body.classList.add('main-controls-hidden');
+        isFullScreen = true;
+        currentFullScreenElement = container;
+      }
+    }
+    
+    // Initialize media and set up event listeners
+    async function initMedia() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        
+        remoteStream = new MediaStream();
+        
+        // Add tracks to peer connection
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
+        
+        // Set up remote stream
+        pc.ontrack = (event) => {
+          event.streams[0].getTracks().forEach(track => {
+            remoteStream.addTrack(track);
+          });
+        };
+        
+        // Set video elements
+        localVideo.srcObject = localStream;
+        remoteVideo.srcObject = remoteStream;
+        
+        // Update UI
+        document.getElementById("localStatus").textContent = "Active";
+        toggleAudioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        toggleVideoBtn.innerHTML = '<i class="fas fa-video"></i>';
+        
+      } catch (error) {
+        console.error("Error accessing media devices:", error);
+        callStatus.textContent = "Error accessing camera/microphone";
+        showToast("Unable to access camera/microphone. Please check permissions.");
+      }
+    }
+    
+    // Start a new call
+    async function startCall() {
+      await initMedia();
+      
+      // Create a new call document
+      callDoc = db.collection("calls").doc();
+      const offerCandidates = callDoc.collection("offerCandidates");
+      const answerCandidates = callDoc.collection("answerCandidates");
+      
+      // Set call ID for sharing
+      currentCallId.textContent = callDoc.id;
+      callIdInput.value = callDoc.id;
+      callStatus.textContent = "Waiting for answer...";
+      
+      // ICE candidate handling
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          offerCandidates.add(event.candidate.toJSON());
+        }
+      };
+      
+      // Create offer
+      const offerDescription = await pc.createOffer();
+      await pc.setLocalDescription(offerDescription);
+      
+      // Save offer to Firestore
+      await callDoc.set({
+        offer: {
+          type: offerDescription.type,
+          sdp: offerDescription.sdp
+        },
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      // Listen for answer
+      callDoc.onSnapshot((snapshot) => {
+        const data = snapshot.data();
+        if (data?.answer && !pc.currentRemoteDescription) {
+          const answerDescription = new RTCSessionDescription(data.answer);
+          pc.setRemoteDescription(answerDescription);
+          callStatus.textContent = "Call connected";
+          startCallTimer();
+        }
+      });
+      
+      // Listen for ICE candidates from answerer
+      answerCandidates.onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === "added") {
+            let candidate = new RTCIceCandidate(change.doc.data());
+            pc.addIceCandidate(candidate);
+          }
+        });
+      });
+    }
+    
+    // Answer a call
+    async function answerCall() {
+      const callId = callIdInput.value;
+      if (!callId) {
+        showToast("Please enter a Call ID");
+        return;
+      }
+      
+      await initMedia();
+      
+      callDoc = db.collection("calls").doc(callId);
+      const offerCandidates = callDoc.collection("offerCandidates");
+      const answerCandidates = callDoc.collection("answerCandidates");
+      
+      // Set up ICE candidate handling
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          answerCandidates.add(event.candidate.toJSON());
+        }
+      };
+      
+      // Get call data
+      const callData = (await callDoc.get()).data();
+      
+      if (!callData || !callData.offer) {
+        showToast("Invalid Call ID or call no longer exists");
+        return;
+      }
+      
+      // Set remote description
+      await pc.setRemoteDescription(new RTCSessionDescription(callData.offer));
+      
+      // Create answer
+      const answerDescription = await pc.createAnswer();
+      await pc.setLocalDescription(answerDescription);
+      
+      // Save answer to Firestore
+      await callDoc.update({
+        answer: {
+          type: answerDescription.type,
+          sdp: answerDescription.sdp
+        }
+      });
+      
+      callStatus.textContent = "Call connected";
+      currentCallId.textContent = callId;
+      startCallTimer();
+      
+      // Listen for ICE candidates from offerer
+      offerCandidates.onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === "added") {
+            let candidate = new RTCIceCandidate(change.doc.data());
+            pc.addIceCandidate(candidate);
+          }
+        });
+      });
+    }
+    
+    // Toggle audio mute
+    function toggleAudio() {
+      if (!localStream) return;
+      
+      const audioTracks = localStream.getAudioTracks();
+      if (audioTracks.length > 0) {
+        const enabled = !audioTracks[0].enabled;
+        audioTracks[0].enabled = enabled;
+        
+        toggleAudioBtn.innerHTML = enabled 
+          ? '<i class="fas fa-microphone"></i>' 
+          : '<i class="fas fa-microphone-slash"></i>';
+        
+        if (enabled) {
+          toggleAudioBtn.classList.add('active');
+        } else {
+          toggleAudioBtn.classList.remove('active');
+        }
+      }
+    }
+    
+    // Toggle video mute
+    function toggleVideo() {
+      if (!localStream) return;
+      
+      const videoTracks = localStream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        const enabled = !videoTracks[0].enabled;
+        videoTracks[0].enabled = enabled;
+        
+        toggleVideoBtn.innerHTML = enabled 
+          ? '<i class="fas fa-video"></i>' 
+          : '<i class="fas fa-video-slash"></i>';
+        
+        document.getElementById("localStatus").textContent = enabled ? "Active" : "Video off";
+        
+        if (enabled) {
+          toggleVideoBtn.classList.add('active');
+        } else {
+          toggleVideoBtn.classList.remove('active');
+        }
+      }
+    }
+    
+    // End the call
+    function endCall() {
+      // Exit fullscreen if active
+      if (isFullScreen && currentFullScreenElement) {
+        currentFullScreenElement.classList.remove('fullscreen');
+        document.body.classList.remove('main-controls-hidden');
+        isFullScreen = false;
+        currentFullScreenElement = null;
+      }
+      
+      // Stop all media tracks
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      
+      // Close peer connection
+      if (pc) {
+        pc.close();
+      }
+      
+      // Delete call document from Firestore
+      if (callDoc) {
+        callDoc.delete();
+      }
+      
+      // Reset UI
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+      currentCallId.textContent = "Not in a call";
+      callStatus.textContent = "Call ended";
+      
+      // Reset buttons
+      toggleAudioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+      toggleAudioBtn.classList.add('active');
+      toggleVideoBtn.innerHTML = '<i class="fas fa-video"></i>';
+      toggleVideoBtn.classList.add('active');
+      
+      // Stop call timer
+      stopCallTimer();
+    }
+    
+    // Start call timer
+    function startCallTimer() {
+      callStartTime = new Date();
+      stopCallTimer(); // Clear any existing timer
+      
+      callTimerInterval = setInterval(() => {
+        const now = new Date();
+        const elapsed = new Date(now - callStartTime);
+        const minutes = elapsed.getMinutes().toString().padStart(2, '0');
+        const seconds = elapsed.getSeconds().toString().padStart(2, '0');
+        callTimer.textContent = `${minutes}:${seconds}`;
+      }, 1000);
+    }
+    
+    // Stop call timer
+    function stopCallTimer() {
+      if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+        callTimerInterval = null;
+      }
+      callTimer.textContent = "";
+    }
+    
+    // Copy call ID to clipboard
+    function copyCallIdToClipboard() {
+      if (currentCallId.textContent && currentCallId.textContent !== "Not in a call") {
+        navigator.clipboard.writeText(currentCallId.textContent)
+          .then(() => {
+            showToast("Call ID copied to clipboard!");
+          })
+          .catch(err => {
+            console.error('Failed to copy: ', err);
+            showToast("Failed to copy Call ID");
+          });
+      }
+    }
+    
+    // Show toast notification
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    // Set up event listeners
+    toggleAudioBtn.addEventListener('click', toggleAudio);
+    toggleVideoBtn.addEventListener('click', toggleVideo);
+    endCallBtn.addEventListener('click', endCall);
+    copyCallIdBtn.addEventListener('click', copyCallIdToClipboard);
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      callStatus.textContent = "Ready to connect";
+    });
+  </script>
+</body>
+</html>

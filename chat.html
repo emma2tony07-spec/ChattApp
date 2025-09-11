@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat App Clone</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #app { display: flex; height: 100vh; flex-direction: column; }
+    .navbar { background-color: #244576; color: white; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: relative; z-index: 1000; height: 60px;}
+    .navbar-title { font-weight: bold; font-size: 1.3rem; }
+    .navbar-icons span { margin-left: 20px; cursor: pointer; font-size: 1.3rem; user-select: none; color: white; transition: color 0.2s ease; }
+    .navbar-icons span:hover { color: #a9c0e7; }
+    .navbar-search { flex: 1; margin-left: 15px; }
+    .navbar-search input { width: 100%; padding: 7px 10px; border-radius: 20px; border: none; outline: none; font-size: 1rem; }
+    #main-content { flex: 1; display: flex; height: calc(100vh - 60px); } /* Removed footer height from calculation */
+    .contacts { width: 30%; min-width: 220px; background: #f0f0f0; display: flex; flex-direction: column; border-right: 1px solid #ccc; position: relative;}
+    footer { position: fixed; bottom: 0; left: 0; width: 30%; background-color: #f1f1f1; display: flex; justify-content: space-around; padding: 0; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000; height: 60px; }
+    .new-chat { position: fixed; bottom: 90px; left: 0; }
+    h5 { color: #244576; margin: 3px 0 0 0; font-size: 12px; font-weight: normal; }
+    #btnf { width: 30%; height: 50px; background: #244576; color: #fff; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; box-shadow: 0px 0px 10px #030507; margin-left: 17px; }
+    img { height: 24px; width: 24px; }
+    .contact-list { overflow-y: auto; flex: 1; margin-top: 10px; padding: 0 10px; }
+    .contact { padding: 15px; border-bottom: 1px solid #ddd; cursor: pointer; user-select: none; }
+    .contact:hover { background: #ddd; }
+    .chat { flex: 1; display: none; flex-direction: column; }
+    .chat-header { background: #244576; color: #fff; padding: 15px; display: flex; align-items: center; }
+    .chat-header button { background: transparent; border: none; color: white; padding-bottom: 5px; font-size: 18px; margin-right: 20px; cursor: pointer; box-shadow: 0px 0px 3px #030507; }
+    .messages { flex: 1; padding: 10px; overflow-y: auto; background: #f9f9f9; }
+    .message { max-width: 60%; margin-bottom: 10px; padding: 10px; border-radius: 15px; clear: both; display: flex; align-items: flex-start; }
+    .sent { background: #244576; color: white; margin-left: auto; }
+    .received { background: #e5e5ea; color: black; margin-right: auto; }
+    .profile-pic { width: 30px; height: 30px; border-radius: 50%; margin-right: 10px; object-fit: cover; }
+    .message-content { flex: 1; }
+    .timestamp { font-size: 11px; color: grey; margin-top: 5px; text-align: right; }
+    .input-area { display: flex; padding: 10px; border-top: 1px solid #ccc; background: #fff; width: 70px; mar}
+    input[type="text"] { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; box-shadow: 3px 3px 3px #030507; }
+    button.send-button { margin-left: 10px; background: #244576; color: white; border: none; border-radius: 20px; padding: 10px 15px; cursor: pointer; box-shadow: 0px 0px 3px #030507; margin-left: 10px;}
+    #new-chat-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; z-index: 999; }
+    .modal-backdrop { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0.9; }
+    .modal { background: white; padding: 20px; border-radius: 10px; z-index: 1000; width: 90%; max-width: 300px; position: relative; box-shadow: 0px 3px 5px #244576; color: white; }
+    .modal h3 { margin: 0 0 10px 0; }
+    .modal input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 15px; outline: none; font-size: 1rem; color: black; }
+    .modal-buttons { text-align: right; }
+    .modal-buttons button { padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; margin-left: 10px; font-weight: bold; }
+    .modal-buttons .cancel { background: #aaa; color: white; }
+    .modal-buttons .add { background: #244576; color: white; }
+    .menu-dropdown { display: none; position: absolute; right: 10px; top: 50px; background-color: white; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
+    .menu-dropdown.show { display: block; }
+    .menu-dropdown a { display: block; padding: 10px 15px; text-decoration: none; color: #333; }
+    .menu-dropdown a:hover { background-color: #f5f5f5; }
+    @media (max-width: 600px) {
+      .contacts { width: 100%; }
+      .chat { position: absolute; top: 0; bottom: 0; width: 100%; background: white; z-index: 100; }
+      footer { width: 100%; }
+      #main-content { height: calc(100vh - 60px); } /* Adjusted for mobile */
+    }
+    .status-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 8px; }
+    .status-indicator.online { background-color: #4CAF50; }
+    .status-indicator.offline { background-color: #ccc; }
+    .modal-buttons .add.loading { position: relative; color: transparent; }
+    .modal-buttons .add.loading::after { content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin: -8px 0 0 -8px; border: 2px solid transparent; border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .context-menu { display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); z-index: 1000; width: 120px; }
+    .menu-item { padding: 8px 12px; cursor: pointer; user-select: none; }
+    .menu-item:hover { background: #f0f0f0; }
+    .footer-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 8px 0; cursor: pointer; background: transparent; border: none; }
+    .footer-tab.active { background-color: #e6e6e6; }
+    .footer-tab.active h5 { color: #244576; font-weight: bold; }
+    .message-sender { font-size: 0.85em; font-weight: bold; color: #444; }
+    #cancel { height: 24px; width: 24px;}
+    #addBtn { margin-left: 5px; border: none; background-color: transparent; margin-top: 7px;}
+    #addImg {height: 30px; width: 30px;}
+    .fab-container {
+            position: fixed;
+            bottom: 12px;
+            right: 20px;
+            z-index: 1000;
+      
+        }
+        
+        .fab {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #6e45e2, #88d3ce);
+            border-radius: 50%;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .fab i {
+            font-size: 24px;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+        
+        .fab.active i {
+            transform: rotate(45deg);
+        }
+        
+        .fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .fab-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .fab-item {
+            display: flex;
+            align-items: center;
+            background-color: #232425;
+            color: #fff;
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: translateX(20px);
+            opacity: 0;
+        }
+        
+        .fab-menu.active .fab-item {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .fab-menu.active .fab-item:nth-child(1) {
+            transition-delay: 0.1s;
+        }
+        
+        .fab-menu.active .fab-item:nth-child(2) {
+            transition-delay: 0.2s;
+        }
+        
+        .fab-menu.active .fab-item:nth-child(3) {
+            transition-delay: 0.3s;
+        }
+        
+        .fab-menu.active .fab-item:nth-child(4) {
+            transition-delay: 0.4s;
+        }
+        
+        .fab-item:hover {
+            background: linear-gradient( 135deg, #6e45e2, #88d3ce);
+            transform: translateX(5px) !important;
+        }
+        
+        .fab-item i {
+            margin-right: 10px;
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+       #sendImg {
+         height: 13px;
+         width: 15px;
+       }
+  </style>
+</head>
+<body>
+  <div class="navbar" id="navbar">
+    <span class="navbar-title">ChatApp</span>
+    <div class="navbar-search" id="navbar-search" style="display:none;">
+      <input type="text" id="search-input" placeholder="Search contacts..." />
+      <button onclick="closeSearchIfOpen()" style="background: none; border: none; color: white; margin-left: 5px; cursor: pointer;"><img id="cancel" src="https://cdn-icons-png.flaticon.com/128/1450/1450571.png"></button>
+    </div>
+    <div class="navbar-icons" id="navbar-icons">
+      <span title="Search" onclick="toggleSearch()"><i class="fas fa-search"></i></span>
+      <span title="Menu" onclick="toggleMenu()"><i class="fas fa-ellipsis-v"></i></span>
+    </div>
+    <div class="menu-dropdown" id="menu-dropdown">
+      <a href="settings.html">Settings</a>
+      <a href="profile.html">Profile</a>
+      <a href="notify_user.html" id="notifications">Notifications</a>
+      <a href="#" id="logout">Logout</a>
+    </div>
+  </div>
+  <div id="main-content">
+    <div class="contacts" id="contacts">
+      
+      <div class="overlay" id="overlay"></div>
+    
+      
+      <div class="new-chat">
+        <button id="btnf" class="new-chat" onclick="openModal()">+ New Chat</button>
+      </div>
+      <div class="contact-list" id="contact-list"></div>
+    </div>
+    <div class="chat" id="chat">
+      <div class="chat-header">
+        <button onclick="goBack()">←</button>
+        <span id="chat-name">Chat</span>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="input-area">
+        <input type="text" id="message-input" placeholder="Type a message..." />
+        <div class="overlay" id="overlay"></div>
+        <button class="send-button" onclick="sendMessage()"><img id="sendImg"src="https://cdn-user-icons.flaticon.com/211821/211821484/1756084246123.svg?token=exp=1756085177~hmac=0cbb754f9f8e4cfcba213919a2079467"></button>
+        <div class="fab-container">
+        <div class="fab" id="fab">
+            <i class="fas fa-plus"></i>
+        </div>
+        
+        <div class="fab-menu" id="fabMenu">
+            <div class="fab-item">
+                <i class="fas fa-comment"></i>
+                <span>Voice Record</span>
+            </div>
+            <div class="fab-item">
+                <i class="fas fa-file-alt"></i>
+                <span>Add Document</span>
+            </div>
+            <div class="fab-item">
+                <i class="fas fa-image"></i>
+                <span>Add Image/Video</span>
+            </div>
+            <div class="fab-item">
+                <i class="fas fa-cog"></i>
+                <span>Automate Chat</span>
+            </div>
+        </div>
+    </div>
+      </div>
+    </div>
+  </div>
+  <footer id="app-footer">
+    <button class="footer-tab active" onclick="toChats()">
+      <img src="https://cdn-icons-png.flaticon.com/128/12595/12595735.png">
+      <h5>Chats</h5>
+    </button>
+    <button class="footer-tab" onclick="toUpdates()">
+      <img src="https://cdn-icons-png.flaticon.com/128/12595/12595753.png">
+      <h5>Updates</h5>
+    </button>
+    <button class="footer-tab" onclick="toCalls()">
+      <img src="https://cdn-icons-png.flaticon.com/128/1077/1077063.png">
+      <h5>Calls</h5>
+    </button>
+  </footer>
+  <div id="new-chat-modal">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal">
+      <h3>Add New Contact</h3>
+      <input type="text" id="new-chat-name" placeholder="Enter name..." />
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal()">Cancel</button>
+        <button class="add" onclick="createChat()">Add</button>
+      </div>
+    </div>
+  </div>
+  <div id="context-menu" class="context-menu">
+    <div class="menu-item" onclick="replyToMessage()">Reply</div>
+    <div class="menu-item" onclick="likeMessage()">Like </div>
+    <div class="menu-item" onclick="deleteMessage()">Delete </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEfkHrGJR82b-Ztdeyq0yURgv5d7UVhrc",
+    authDomain: "chattapp-b2abe.firebaseapp.com",
+    databaseURL: "https://chattapp-b2abe-default-rtdb.firebaseio.com",
+    projectId: "chattapp-b2abe",
+    storageBucket: "chattapp-b2abe.firebasestorage.app",
+    messagingSenderId: "479823967484",
+    appId: "1:479823967484:web:f8ce65ef5e20aa43aad379",
+    measurementId: "G-S4J69CW2LJ"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const database = firebase.database();
+
+  let currentUser = null;
+  let currentChatId = null;
+  let currentChatUser = null;
+  let loadedMessages = [];
+
+  async function repairDatabase() {
+    try {
+      const updates = {};
+      const [userChatsSnap, usersSnap] = await Promise.all([
+        database.ref('userChats').once('value'),
+        database.ref('users').once('value')
+      ]);
+
+      userChatsSnap.forEach(userNode => {
+        userNode.forEach(contactNode => {
+          const path = `userChats/${userNode.key}/${contactNode.key}`;
+          updates[`${path}/contactId`] = contactNode.key;
+          updates[`${path}/contactName`] = contactNode.child('displayName').val() || contactNode.child('Displayname').val() || 'Unknown';
+          updates[`${path}/timestamp`] = firebase.database.ServerValue.TIMESTAMP;
+          const userData = usersSnap.child(userNode.key).val();
+          if (userData) {
+            updates[`userChats/${contactNode.key}/${userNode.key}`] = {
+              contactId: userNode.key,
+              contactName: userData.displayName || userData.email,
+              timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+          }
+        });
+      });
+
+      if (Object.keys(updates).length) {
+        await database.ref().update(updates);
+      }
+      localStorage.setItem('dbRepaired', 'true');
+      return true;
+    } catch (e) {
+      console.error('Database repair failed:', e);
+      return false;
+    }
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      currentUser = user;
+      if (!localStorage.getItem('dbRepaired')) { await repairDatabase(); }
+      loadContacts();
+      setupPresence();
+    } else {
+      window.location.href = 'login.html';
+    }
+  });
+  
+  document.addEventListener('DOMContentLoaded', function() {
+      const fab = document.getElementById('fab');
+      const fabMenu = document.getElementById('fabMenu');
+      
+      fab.addEventListener('click', function(e) {
+        e.stopPropagation();
+        this.classList.toggle('active');
+        fabMenu.classList.toggle('active');
+      });
+      
+      // Close FAB menu when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!fab.contains(e.target) && !fabMenu.contains(e.target)) {
+          fab.classList.remove('active');
+          fabMenu.classList.remove('active');
+        }
+      });
+    });
+
+
+  function setupPresence() {
+    const userStatusRef = database.ref(`status/${currentUser.uid}`);
+    const connectedRef = database.ref('.info/connected');
+    connectedRef.on('value', (snap) => {
+      if (snap.val() === true) {
+        userStatusRef.onDisconnect().set({ status: 'offline', last_changed: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+          userStatusRef.set({ status: 'online', last_changed: firebase.database.ServerValue.TIMESTAMP });
+        });
+      }
+    });
+  }
+  
+  function toChats() {
+    window.location.href="chat.html";
+  }
+  
+  function toUpdates() {
+    window.location.href="status.html";
+  }
+  
+  function toCalls() {
+    window.location.href="calls.html";
+  }
+
+  function loadContacts() {
+    const contactList = document.getElementById('contact-list');
+    contactList.innerHTML = '';
+    database.ref(`userChats/${currentUser.uid}`).on('value', snapshot => {
+      contactList.innerHTML = '';
+      snapshot.forEach(contact => {
+        const contactData = contact.val();
+
+        const contactEl = document.createElement('div');
+        contactEl.className = 'contact';
+
+        const profileBtn = document.createElement('button');
+        profileBtn.style.border = 'none';
+        profileBtn.style.background = 'transparent';
+        profileBtn.style.cursor = 'pointer';
+        profileBtn.style.padding = '0';
+        profileBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.location.href = 'profile.html';
+        };
+
+        const img = document.createElement('img');
+        img.className = 'profile-pic';
+        img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(contactData.contactName || 'U')}&background=244576&color=fff`;
+        profileBtn.appendChild(img);
+
+        const span = document.createElement('span');
+        span.textContent = contactData.contactName + ' ';
+        const indicator = document.createElement('span');
+        indicator.className = 'status-indicator offline';
+        span.appendChild(indicator);
+
+        contactEl.appendChild(profileBtn);
+        contactEl.appendChild(span);
+
+        database.ref(`status/${contact.key}/status`).on('value', statusSnap => {
+          const status = statusSnap.val() || 'offline';
+          indicator.classList.toggle('online', status === 'online');
+          indicator.classList.toggle('offline', status !== 'online');
+          indicator.title = status === 'online' ? 'Online' : 'Offline';
+        });
+
+        contactEl.onclick = () => openChat(contactData.contactName, contact.key);
+
+        contactList.appendChild(contactEl);
+      });
+    });
+  }
+
+  function openChat(contactName, contactId = 'you_chat') {
+    currentChatUser = contactName;
+    currentChatId = contactId;
+    document.getElementById('chat-name').textContent = contactName;
+
+    document.getElementById('chat').style.display = 'flex';
+    document.getElementById('contacts').style.display = 'none';
+    document.getElementById('app-footer').style.display = 'none'; // Hide footer in chat view
+    if (window.innerWidth <= 600) { document.getElementById('navbar').style.display = 'none'; }
+
+    const messagesContainer = document.getElementById('messages');
+    messagesContainer.innerHTML = '';
+
+    const chatId = [currentUser.uid, contactId].sort().join('_');
+
+    database.ref(`chats/${chatId}`).orderByChild('timestamp').on('value', snapshot => {
+      messagesContainer.innerHTML = '';
+      loadedMessages = [];
+
+      snapshot.forEach(messageSnapshot => {
+        const m = messageSnapshot.val() || {};
+        const message = { id: m.id || messageSnapshot.key, ...m };
+        loadedMessages.push(message);
+        displayMessage(message, message.senderId === currentUser.uid);
+      });
+
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+  }
+
+  function sendMessage() {
+    const messageInput = document.getElementById('message-input');
+    const text = messageInput.value.trim();
+    if (!text || !currentChatId) return;
+
+    const chatId = [currentUser.uid, currentChatId].sort().join('_');
+    const newMessageKey = database.ref(`chats/${chatId}`).push().key;
+
+    const messageData = {
+      id: newMessageKey,
+      text,
+      senderId: currentUser.uid,
+      senderName: currentUser.displayName || currentUser.email,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
+    const updates = {};
+    updates[`chats/${chatId}/${newMessageKey}`] = messageData;
+    updates[`userChats/${currentUser.uid}/${currentChatId}/lastMessage`] = { text, timestamp: messageData.timestamp };
+    updates[`userChats/${currentChatId}/${currentUser.uid}/lastMessage`] = { text, timestamp: messageData.timestamp };
+
+    database.ref().update(updates)
+      .then(() => { messageInput.value = ''; })
+      .catch(error => { console.error('Error sending message:', error); });
+  }
+
+  function displayMessage(message, isSent) {
+    const messagesContainer = document.getElementById('messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+    messageDiv.dataset.messageId = message.id || message.timestamp;
+
+    if (!isSent) {
+        const profilePic = document.createElement('img');
+        profilePic.className = 'profile-pic';
+        profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(message.senderName || 'U')}&background=244576&color=fff`;
+        messageDiv.appendChild(profilePic);
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    const displayName = isSent ? 'You' : (message.senderName || 'User');
+    contentDiv.innerHTML = `${!isSent ? `<div class="message-sender">${displayName}</div>` : ''}
+      <div>${message.text || ''}</div>
+      <div class="timestamp">${formatTimestamp(message.timestamp)}</div>`;
+
+    messageDiv.appendChild(contentDiv);
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+  
+  function formatTimestamp(timestamp) {
+    if (!timestamp) return 'Just now';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function createChat() {
+    const emailInput = document.getElementById('new-chat-name');
+    const email = emailInput.value.trim().toLowerCase();
+    if (!email) { alert('Please enter an email address.'); return; }
+
+    const addBtn = document.querySelector('.modal-buttons .add');
+    addBtn.disabled = true; addBtn.classList.add('loading'); addBtn.textContent = '';
+
+    try {
+      if (!currentUser || !currentUser.uid) throw new Error('You must be logged in to add a contact.');
+
+      const snapshot = await database.ref('users').orderByChild('email').equalTo(email).once('value');
+      if (!snapshot.exists()) throw new Error(`User with email "${email}" not found. They may need to complete registration.`);
+
+      let contactData = null; let contactId = null;
+      snapshot.forEach(childSnapshot => { contactId = childSnapshot.key; contactData = childSnapshot.val(); });
+      if (!contactData || !contactId) throw new Error('Could not retrieve contact details.');
+      if (contactId === currentUser.uid) throw new Error('You cannot add yourself as a contact.');
+
+      const existingChatSnap = await database.ref(`userChats/${currentUser.uid}/${contactId}`).once('value');
+      if (existingChatSnap.exists()) throw new Error(`${contactData.displayName || contactData.email} is already in your contacts!`);
+
+      const timestamp = firebase.database.ServerValue.TIMESTAMP;
+      const updates = {};
+      updates[`userChats/${currentUser.uid}/${contactId}`] = { contactId, contactName: contactData.displayName || contactData.email, timestamp };
+      updates[`userChats/${contactId}/${currentUser.uid}`] = { contactId: currentUser.uid, contactName: currentUser.displayName || currentUser.email, timestamp };
+      await database.ref().update(updates);
+
+      alert(`Added ${contactData.displayName || contactData.email} to your contacts!`);
+      closeModal();
+      loadContacts();
+    } catch (error) {
+      console.error('Chat creation error:', error);
+      alert(error.message);
+    } finally {
+      addBtn.disabled = false; addBtn.classList.remove('loading'); addBtn.textContent = 'Add';
+    }
+  }
+
+  function goBack() {
+    document.getElementById('chat').style.display = 'none';
+    document.getElementById('contacts').style.display = 'flex';
+    document.getElementById('app-footer').style.display = 'flex'; // Show footer when returning to contacts
+    if (window.innerWidth <= 600) document.getElementById('navbar').style.display = 'flex';
+    closeSearchIfOpen();
+    closeMenu();
+  }
+
+  function toggleSearch() {
+    const navbarSearch = document.getElementById('navbar-search');
+    const navbarIcons = document.getElementById('navbar-icons');
+    if (navbarSearch.style.display === 'none' || navbarSearch.style.display === '') {
+      navbarSearch.style.display = 'flex';
+      navbarIcons.style.display = 'none';
+      document.getElementById('search-input').focus();
+      closeMenu();
+    } else { closeSearchIfOpen(); }
+  }
+
+  function closeSearchIfOpen() {
+    const navbarSearch = document.getElementById('navbar-search');
+    const navbarIcons = document.getElementById('navbar-icons');
+    navbarSearch.style.display = 'none';
+    navbarIcons.style.display = 'flex';
+    const si = document.getElementById('search-input');
+    si.value = '';
+    filterContacts();
+  }
+
+  function filterContacts() {
+    const filter = (document.getElementById('search-input').value || '').toLowerCase();
+    const contacts = document.querySelectorAll('.contact-list .contact');
+    contacts.forEach(contact => {
+      const text = contact.textContent.toLowerCase();
+      contact.style.display = text.includes(filter) ? '' : 'none';
+    });
+  }
+
+  function toggleMenu() { document.getElementById('menu-dropdown').classList.toggle('show'); closeSearchIfOpen(); }
+  function closeMenu() { document.getElementById('menu-dropdown').classList.remove('show'); }
+  function openModal() { document.getElementById('new-chat-modal').style.display = 'flex'; document.getElementById('new-chat-name').value=''; document.getElementById('new-chat-name').focus(); closeMenu(); }
+  function closeModal() { document.getElementById('new-chat-modal').style.display = 'none'; }
+
+  document.getElementById('logout').addEventListener('click', () => auth.signOut());
+  document.getElementById('search-input').addEventListener('input', filterContacts);
+  document.getElementById('message-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+  let pressTimer; let selectedMessageId = null;
+  const messagesEl = document.getElementById('messages');
+  messagesEl.addEventListener('mousedown', handlePressStart);
+  messagesEl.addEventListener('touchstart', handlePressStart);
+  messagesEl.addEventListener('mouseup', () => clearTimeout(pressTimer));
+  messagesEl.addEventListener('touchend', () => clearTimeout(pressTimer));
+  document.addEventListener('click', (e) => { if (!e.target.closest('.context-menu')) hideContextMenu(); });
+
+  function handlePressStart(e) {
+    const target = e.touches ? document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY) : e.target;
+    const messageElement = target.closest('.message');
+    if (!messageElement) return;
+    pressTimer = setTimeout(() => { showContextMenu(e, messageElement.dataset.messageId); e.preventDefault(); }, 500);
+  }
+
+  function showContextMenu(e, messageId) {
+    const menu = document.getElementById('context-menu');
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    menu.style.display = 'block';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    selectedMessageId = messageId;
+    e.preventDefault();
+  }
+  
+  function hideContextMenu() { document.getElementById('context-menu').style.display = 'none'; selectedMessageId = null; }
+
+  function replyToMessage() { const message = getMessageById(selectedMessageId); alert(`Replying to: "${(message && message.text) || ''}"`); hideContextMenu(); }
+  function likeMessage() { const message = getMessageById(selectedMessageId); alert(`Liked: "${(message && message.text) || ''}"`); hideContextMenu(); }
+  function deleteMessage() {
+    if (!selectedMessageId) return; if (!confirm('Delete this message?')) { hideContextMenu(); return; }
+    const chatId = [currentUser.uid, currentChatId].sort().join('_');
+    database.ref(`chats/${chatId}/${selectedMessageId}`).remove().then(() => alert('Message deleted!')).catch((error) => alert('Error deleting: ' + error));
+    hideContextMenu();
+  }
+  
+  function getMessageById(messageId) { return loadedMessages.find(msg => (msg.id || msg.timestamp) === messageId) || null; }
+
+  window.openChat = openChat;
+  window.sendMessage = sendMessage;
+  window.goBack = goBack;
+  window.toggleSearch = toggleSearch;
+  window.closeSearchIfOpen = closeSearchIfOpen;
+  window.toggleMenu = toggleMenu;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.createChat = createChat;
+  </script>
+</body>
+</html> 

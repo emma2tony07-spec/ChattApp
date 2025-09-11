@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Signup</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f2f2f2;
+      padding: 30px;
+      display: flex;
+      justify-content: center;
+    }
+    div {
+      border-radius: 30px;
+      box-shadow: 0px 0px 5px #244576;
+      padding-left: 20px;
+      padding-right: 20px;
+      width: 240px;
+    }
+    h2 {
+      margin-left: 30%;
+    }
+    h4 {
+      margin-bottom: 10px;
+    }
+    input, #signupBtn {
+      display: block;
+      width: 200px;
+      margin-bottom: 27px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: none;
+      box-shadow: 0px 0px 5px #244576;
+      outline: none;
+    }
+    #signupBtn {
+      background-color: #244576;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0px 0px 7px #030507;
+    }
+  #view {
+      position: absolute;
+      right: 60px;
+      margin-bottom:80px;
+      border-width: 0px;
+      background-color: transparent;
+      cursor: pointer;
+      border-width: 0px;
+    }
+    #view img {
+      height: 15px;
+      width: 15px;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h2>Sign Up</h2>
+    <label for="name"><h4>Name:</h4></label>
+    <input type="text" id="name" placeholder="Enter your Name..." />
+      
+    <label for="email"><h4>Email:</h4></label>
+    <input type="email" id="email" placeholder="Enter a valid Email..." />
+      
+    <label for="phone"><h4>Phone:</h4></label>
+    <input type="tel" id="phone" placeholder="Enter your Phone Number..." />
+
+    <button id="view" type="button"><img src="https://cdn-icons-png.flaticon.com/512/2767/2767194.png"/></button>
+    <label for="password"><h4>Password:</h4></label> 
+    <input type="password" id="password" placeholder="Enter New Password..." />
+    
+    <button id="signupBtn">Sign Up</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+
+  <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEfkHrGJR82b-Ztdeyq0yURgv5d7UVhrc",
+      authDomain: "chattapp-b2abe.firebaseapp.com",
+      databaseURL: "https://chattapp-b2abe-default-rtdb.firebaseio.com",
+      projectId: "chattapp-b2abe",
+      storageBucket: "chattapp-b2abe.firebasestorage.app",
+      messagingSenderId: "479823967484",
+      appId: "1:479823967484:web:f8ce65ef5e20aa43aad379",
+      measurementId: "G-S4J69CW2LJ"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const signupBtn = document.getElementById("signupBtn");
+      const nameInput = document.getElementById("name");
+      const emailInput = document.getElementById("email");
+      const phoneInput = document.getElementById("phone");
+      const passwordInput = document.getElementById("password");
+      const viewButton = document.getElementById("view");
+
+      // Password visibility toggle (same as login page)
+      viewButton.addEventListener("click", function() {
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          viewButton.querySelector("img").src = "https://cdn-icons-png.flaticon.com/512/2767/2767192.png";
+        } else {
+          passwordInput.type = "password";
+          viewButton.querySelector("img").src = "https://cdn-icons-png.flaticon.com/512/2767/2767194.png";
+        }
+      });
+
+      signupBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const password = passwordInput.value;
+
+        // Validation
+        if (!name || !email || !phone || !password) {
+          alert("Please fill all fields");
+          return;
+        }
+
+        if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/.test(password)) {
+          alert("Password needs 6+ chars with uppercase, lowercase and numbers");
+          return;
+        }
+
+        // Show loading state
+        signupBtn.disabled = true;
+        signupBtn.textContent = "Creating account...";
+
+        try {
+          // 1. Create Firebase auth user
+          const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+          
+          // 2. Save additional user data to Realtime Database
+          await firebase.database().ref('users/' + userCredential.user.uid).set({
+            displayName: name,
+            email: email,
+            phone: phone,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            status: "offline"
+          });
+
+          // 3. Send email verification
+          await userCredential.user.sendEmailVerification();
+          
+          alert(`Account created! Verification email sent to ${email}`);
+          window.location.href = "login.html";
+          
+        } catch (error) {
+          let errorMessage = error.message;
+          
+          // User-friendly error messages
+          switch(error.code) {
+            case 'auth/email-already-in-use':
+              errorMessage = "Email already registered";
+              break;
+            case 'auth/invalid-email':
+              errorMessage = "Invalid email format";
+              break;
+            case 'auth/weak-password':
+              errorMessage = "Password should be at least 6 characters";
+              break;
+          }
+          
+          alert(errorMessage);
+          console.error("Signup error:", error);
+        } finally {
+          // Reset button state
+          signupBtn.disabled = false;
+          signupBtn.textContent = "Sign Up";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

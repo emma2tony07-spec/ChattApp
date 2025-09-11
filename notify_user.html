@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notifications (Receive Only)</title>
+  <style>
+    :root{
+      --primary:#244576; /* requested color */
+      --bg:#ffffff;      /* white background */
+      --text:#0f172a;    /* slate-900 */
+      --muted:#6b7280;   /* gray-500 */
+      --card:#ffffff;
+      --ring:rgba(36,69,118,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+    }/* Navbar */
+.navbar{
+  position:sticky; top:0; z-index:50;
+  background:#fff; border-bottom:1px solid #e5e7eb;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.75rem 1rem;
+}
+.brand{
+  display:flex; align-items:center; gap:.5rem; font-weight:700; letter-spacing:.2px;
+  color:var(--primary);
+}
+.brand .dot{width:10px;height:10px;border-radius:9999px;background:var(--primary)}
+
+.icon-btn{
+  appearance:none; border:none; background:transparent; cursor:pointer;
+  position:relative; padding:.35rem; border-radius:.75rem;
+}
+.icon-btn:focus-visible{outline:3px solid var(--ring)}
+.icon{
+  width:24px; height:24px; display:block; fill:none; stroke:var(--primary); stroke-width:2;
+}
+.badge{
+  position:absolute; top:2px; right:2px; min-width:18px; height:18px; padding:0 4px;
+  background:var(--primary); color:#fff; border-radius:9999px; font-size:11px; display:grid; place-items:center;
+}
+
+/* Layout */
+.container{max-width:900px; margin:1rem auto; padding:0 1rem 3rem}
+.toolbar{display:flex; gap:.5rem; align-items:center; justify-content:space-between; margin:1rem 0}
+.hint{color:var(--muted); font-size:.95rem}
+.btn{
+  background:var(--primary); color:#fff; border:none; border-radius:.75rem; padding:.6rem 1rem; font-weight:600; cursor:pointer; box-shadow:0 6px 16px rgba(36,69,118,.2);
+}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+
+/* Cards */
+.list{display:grid; gap:.75rem}
+.card{
+  background:var(--card); border:1px solid #e5e7eb; border-radius:1rem; padding:1rem; display:grid; gap:.35rem; position:relative;
+}
+.card.unread{border-color:var(--ring)}
+.card.unread::before{
+  content:""; position:absolute; left:-1px; top:0; bottom:0; width:4px; background:var(--primary); border-radius:1rem 0 0 1rem;
+}
+.row{display:flex; align-items:center; gap:.5rem; justify-content:space-between}
+.title{font-weight:700;}
+.time{color:var(--muted); font-size:.85rem}
+.msg{line-height:1.45}
+
+.pill{
+  font-size:.75rem; font-weight:700; color:var(--primary); background:rgba(36,69,118,.08); padding:.25rem .5rem; border-radius:9999px; border:1px solid rgba(36,69,118,.15)
+}
+
+.actions{display:flex; gap:.5rem}
+.ghost{
+  background:#fff; color:var(--primary); border:1px solid rgba(36,69,118,.25); border-radius:.6rem; padding:.45rem .75rem; font-weight:600; cursor:pointer
+}
+
+/* Toast */
+.toast-wrap{position:fixed; right:1rem; bottom:1rem; display:grid; gap:.5rem; z-index:60}
+.toast{
+  background:#fff; border:1px solid #e5e7eb; border-left:4px solid var(--primary);
+  padding:.75rem 1rem; border-radius:.75rem; box-shadow:0 10px 24px rgba(36,69,118,.18);
+  max-width:320px;
+}
+
+/* Empty state */
+.empty{
+  text-align:center; color:var(--muted); border:2px dashed #e5e7eb; border-radius:1rem; padding:2rem; margin-top:1rem
+}
+
+/* Footer note */
+.footnote{margin-top:1.25rem; color:var(--muted); font-size:.9rem}
+
+@media (prefers-reduced-motion:no-preference){
+  .fade-in{animation:fade .3s ease-out}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
+}
+
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar" role="navigation" aria-label="Main">
+    <div class="brand" aria-label="App brand">
+      <span class="dot" aria-hidden="true"></span>
+      <span>NotifyCenter</span>
+    </div><div style="display:flex; align-items:center; gap:.5rem">
+  <button id="markAllBtn" class="ghost" title="Mark all as read">Mark all as read</button>
+  <button id="bell" class="icon-btn" aria-label="Notifications" title="Notifications">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 1 1-6 0"/>
+    </svg>
+    <span id="badge" class="badge" hidden>0</span>
+  </button>
+</div>
+
+  </header>  <!-- Main -->  <main class="container">
+    <div class="toolbar">
+      <div class="hint">You will <strong>receive notifications</strong> here. Replying is intentionally disabled.</div>
+      <div class="actions">
+        <button id="startDemo" class="btn">Start Demo</button>
+        <button id="stopDemo" class="ghost" disabled>Stop</button>
+      </div>
+    </div><section id="list" class="list" aria-live="polite" aria-relevant="additions">
+  <div class="empty" id="empty">No notifications yet. Click <em>Start Demo</em> to simulate incoming alerts.</div>
+</section>
+
+<p class="footnote">Note: This UI is read‑only. It shows incoming messages/alerts but provides <em>no reply box</em> or actions to send messages.</p>
+
+  </main>  <div id="toasts" class="toast-wrap" aria-live="assertive" aria-atomic="true"></div>  <script>
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('empty');
+    const badgeEl = document.getElementById('badge');
+    const bellBtn = document.getElementById('bell');
+    const startBtn = document.getElementById('startDemo');
+    const stopBtn = document.getElementById('stopDemo');
+    const markAllBtn = document.getElementById('markAllBtn');
+    const toasts = document.getElementById('toasts');
+
+    let unread = 0;
+    let timer = null;
+    let counter = 1;
+
+    const samples = [
+      'System maintenance scheduled for tonight at 11:00 PM.',
+      'Your weekly report is ready to view.',
+      'New login from a recognized device.',
+      'A teammate mentioned you in a comment.',
+      'Security tip: Turn on two‑factor authentication.',
+      'Storage usage has reached 80% capacity.',
+      'Backup completed successfully.',
+      'Reminder: Meeting starts in 15 minutes.'
+    ];
+
+    function fmtTime(d=new Date()){
+      return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+
+    function addNotification(msg){
+      // Hide empty state
+      if (emptyEl) emptyEl.remove();
+
+      const id = `n_${Date.now()}_${counter++}`;
+      const time = fmtTime();
+      const title = 'Notification';
+
+      const card = document.createElement('article');
+      card.className = 'card unread fade-in';
+      card.id = id;
+      card.setAttribute('role','status');
+      card.innerHTML = `
+        <div class="row">
+          <div class="title">${title}</div>
+          <time class="time" datetime="${new Date().toISOString()}">${time}</time>
+        </div>
+        <div class="msg">${escapeHTML(msg)}</div>
+        <div class="row">
+          <span class="pill" aria-label="Read only">Read‑only</span>
+          <div class="actions">
+            <button class="ghost" data-action="mark-read">Mark read</button>
+            <button class="ghost" disabled title="Replies are disabled">Reply disabled</button>
+          </div>
+        </div>`;
+
+      listEl.prepend(card);
+      bumpUnread(1);
+      showToast(msg);
+    }
+
+    function bumpUnread(delta){
+      unread = Math.max(0, unread + delta);
+      if (unread > 0){
+        badgeEl.hidden = false; badgeEl.textContent = String(unread);
+      } else {
+        badgeEl.hidden = true; badgeEl.textContent = '0';
+      }
+      document.title = unread ? `(${unread}) Notifications` : 'Notifications (Receive Only)';
+    }
+
+    function showToast(text){
+      const el = document.createElement('div');
+      el.className = 'toast fade-in';
+      el.innerHTML = `<strong style="display:block; margin-bottom:.25rem; color:var(--primary)">New notification</strong>${escapeHTML(text)}`;
+      toasts.appendChild(el);
+      setTimeout(()=>{ el.remove(); }, 4200);
+    }
+
+    // Basic HTML escape to prevent injection in demo data
+    function escapeHTML(str){
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#039;');
+    }
+
+    // Simulate incoming notifications
+    startBtn.addEventListener('click', () => {
+      if (timer) return;
+      startBtn.disabled = true; stopBtn.disabled = false;
+      addNotification(pick(samples));
+      timer = setInterval(()=> addNotification(pick(samples)), 6000);
+    });
+
+    stopBtn.addEventListener('click', () => {
+      clearInterval(timer); timer = null; startBtn.disabled = false; stopBtn.disabled = true;
+    });
+
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    // Card actions (mark as read)
+    listEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-action="mark-read"]');
+      if (!btn) return;
+      const card = btn.closest('.card');
+      if (card && card.classList.contains('unread')){
+        card.classList.remove('unread');
+        bumpUnread(-1);
+      }
+    });
+
+    // Mark all as read
+    markAllBtn.addEventListener('click', () => {
+      document.querySelectorAll('.card.unread').forEach(c=>c.classList.remove('unread'));
+      bumpUnread(-unread);
+    });
+
+    // Clicking the bell just scrolls to the top of list
+    bellBtn.addEventListener('click', () => {
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  </script></body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading | Secure Access</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: white;
+            color: #244576;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .logo {
+            margin-bottom: 2rem;
+        }
+        
+        .logo h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .logo p {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .loading-animation {
+            margin: 2.5rem 0;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            border: 4px solid white;
+            border-left: 4px solid #244576;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 1.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .dots:after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        .timeout-message {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .timeout-message h3 {
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+        }
+        
+        .timeout-message p {
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        
+        .retry-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .retry-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .connection-status {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
+            .logo h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1></h1>
+            <p></p>
+        </div>
+        
+        <div class="loading-animation">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading<span class="dots"></span></div>
+        </div>
+        
+        <div class="connection-status" id="connectionStatus">
+            Checking network stability...
+        </div>
+        
+        <div class="timeout-message" id="timeoutMessage">
+            <h3>Connection Timeout</h3>
+            <p>We're having trouble connecting to our servers. This might be due to an unstable network connection. Please check your internet connection and try again.</p>
+            <button class="retry-button" id="retryButton">Retry Connection</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const connectionStatus = document.getElementById('connectionStatus');
+            const timeoutMessage = document.getElementById('timeoutMessage');
+            const retryButton = document.getElementById('retryButton');
+            
+            // Set timeout duration (5 seconds)
+            const timeoutDuration = 5000;
+            let timeoutTriggered = false;
+            
+            // Function to check network stability
+            function checkNetworkStability() {
+                // Reset UI state
+                timeoutMessage.style.display = 'none';
+                connectionStatus.textContent = 'Checking network stability...';
+                
+                // Create a timeout to handle slow network
+                const timeout = setTimeout(() => {
+                    timeoutTriggered = true;
+                    showTimeoutMessage();
+                }, timeoutDuration);
+                
+                // Simulate network check (in a real scenario, this would be a fetch request)
+                // For demonstration, we'll use a random success rate of 80%
+                const isStable = Math.random() > 0.2;
+                
+                if (isStable && !timeoutTriggered) {
+                    clearTimeout(timeout);
+                    connectionStatus.textContent = 'Network stable. Redirecting...';
+                    
+                    // Redirect to login page after a brief delay
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                }
+            }
+            
+            // Function to show timeout message
+            function showTimeoutMessage() {
+                connectionStatus.textContent = 'Network connection unstable';
+                timeoutMessage.style.display = 'block';
+            }
+            
+            // Initial check
+            checkNetworkStability();
+            
+            // Retry button handler
+            retryButton.addEventListener('click', function() {
+                timeoutTriggered = false;
+                checkNetworkStability();
+            });
+            
+            // Listen for online/offline events
+            window.addEventListener('online', function() {
+                connectionStatus.textContent = 'Connection restored. Checking...';
+                setTimeout(checkNetworkStability, 1000);
+            });
+            
+            window.addEventListener('offline', function() {
+                connectionStatus.textContent = 'You are currently offline.';
+                showTimeoutMessage();
+            });
+        });
+    </script>
+</body>
+</html>

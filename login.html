@@ -1,0 +1,255 @@
+<!DOCTYPE html><html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Login</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      background: #f4f4f4;
+    }
+    #dir {
+      min-height: 350px;
+      width: 250px;
+      border-radius: 30px;
+      margin-top: 20px;
+      padding-left: 10px;
+      padding-bottom: 20px;
+      box-shadow: 0px 0px 5px #244576;
+      background: #fff;
+    }
+    h3 {
+      margin-left: 10px;
+      margin-top: 40px;
+    }
+    h4 {
+      margin-left: 10px;
+      margin-top: 35px;
+    }
+    input {
+      height: 30px;
+      width: 200px;
+      border-width: 0px;
+      border-radius: 10px;
+      padding-left: 10px;
+      box-shadow: 0px 0px 5px #244576;
+      outline: none;
+      margin-left: 10px;
+      margin-top: -10px;
+    }
+    #login {
+      height: 40px;
+      width: 200px;
+      margin-left: 17px;
+      margin-top: -10px;
+      background-color: #244576;
+      color: white;
+      border-radius: 30px;
+      border-width: 0px;
+      box-shadow: 0px 0px 7px #030507;
+      cursor: pointer;
+    }
+    a {
+      color: #244576;
+      text-decoration: none;
+      font-size: 13px;
+      margin-top: 10px;
+      margin-left: 20px;
+      display: block;
+    }
+    #password {
+      margin-bottom: 30px;
+    }
+    #error {
+      color: red;
+      font-size: 12px;
+      margin-left: 20px;
+      margin-top: 5px;
+      margin-bottom: 20px;
+    }
+    #link {
+      margin-top: 40px;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin: 10px;
+    }
+    /* Add to your CSS */
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #view {
+      position: absolute;
+      right: 25px;
+      margin-top: -35px;
+      border-width: 0px;
+      background-color: transparent;
+      cursor: pointer;
+    }
+    #view img {
+      height: 15px;
+      width: 15px;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div id="dir">
+    <form id="loginForm">
+      <label for="email"><h4>Email:</h4></label>
+      <input id="email" type="email" placeholder="Enter Email..." required>
+      
+      <label for="password"><h4>Password:</h4></label>
+      <div class="password-wrapper">
+        <input id="password" type="password" placeholder="Enter Password..." required>
+        <button id="view" type="button"><img src="https://cdn-icons-png.flaticon.com/512/2767/2767194.png"/></button>
+      </div>
+      
+      <div id="error"></div>
+      <div id="loading">Logging in...</div>
+      <button id="login" type="submit">Log In</button>
+      <div id="link">
+        <a href="#" id="forgot-password"><i>Forgot Password</i></a>
+        <a href="signin.html"><i>Don't have an account? Sign up</i></a>
+      </div>
+    </form>
+  </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBEfkHrGJR82b-Ztdeyq0yURgv5d7UVhrc",
+      authDomain: "chattapp-b2abe.firebaseapp.com",
+      databaseURL: "https://chattapp-b2abe-default-rtdb.firebaseio.com",
+      projectId: "chattapp-b2abe",
+      storageBucket: "chattapp-b2abe.firebasestorage.app",
+      messagingSenderId: "479823967484",
+      appId: "1:479823967484:web:f8ce65ef5e20aa43aad379",
+      measurementId: "G-S4J69CW2LJ"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById("loginForm");
+      const errorElement = document.getElementById("error");
+      const loadingElement = document.getElementById("loading");
+      const viewButton = document.getElementById("view");
+      const passwordInput = document.getElementById("password");
+      
+      // Password visibility toggle
+      viewButton.addEventListener("click", function() {
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          viewButton.querySelector("img").src = "https://cdn-icons-png.flaticon.com/512/2767/2767192.png";
+        } else {
+          passwordInput.type = "password";
+          viewButton.querySelector("img").src = "https://cdn-icons-png.flaticon.com/512/2767/2767194.png";
+        }
+      });
+      
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("email").value.trim();
+        const password = passwordInput.value;
+        
+        // Basic validation
+        if (!email || !password) {
+          errorElement.textContent = "Please fill all fields";
+          return;
+        }
+
+        if (password.length < 6) {
+          errorElement.textContent = "Password must be at least 6 characters";
+          return;
+        }
+
+        // Show loading state
+        loginForm.querySelector("button").innerHTML = 
+          '<span class="loading-spinner"></span> Logging in...';
+
+        try {
+          // Firebase Email/Password Login
+          const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+          
+          // Check if email is verified
+          if (!userCredential.user.emailVerified) {
+            await firebase.auth().signOut();
+            errorElement.textContent = "Please verify your email first. Check your inbox.";
+            return;
+          }
+          
+          // Successful login
+          window.location.href = "chat.html";
+          
+        } catch (error) {
+          // Handle errors
+          let errorMessage = "Login failed. Please try again.";
+          
+          // User-friendly error messages
+          switch(error.code) {
+            case 'auth/user-not-found':
+              errorMessage = "No account found with this email";
+              break;
+            case 'auth/wrong-password':
+              errorMessage = "Incorrect password";
+              break;
+            case 'auth/too-many-requests':
+              errorMessage = "Account temporarily locked due to many failed attempts";
+              break;
+            case 'auth/invalid-email':
+              errorMessage = "Invalid email format";
+              break;
+          }
+          
+          errorElement.textContent = errorMessage;
+          console.error("Login error:", error);
+        } finally {
+          // Reset UI
+          loadingElement.style.display = "none";
+          loginForm.querySelector("button").disabled = false;
+          loginForm.querySelector("button").textContent = "Log In";
+        }
+      });
+
+      // Password reset functionality
+      document.getElementById("forgot-password").addEventListener("click", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("email").value.trim() || 
+                     prompt("Enter your email to reset password:");
+        
+        if (email) {
+          firebase.auth().sendPasswordResetEmail(email)
+            .then(() => alert("Password reset email sent!"))
+            .catch(err => {
+              alert("Error: " + (err.code === 'auth/user-not-found' ? 
+                "No account found with this email" : 
+                "Failed to send reset email"));
+            });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      margin: 0; 
+      font-family: Arial, sans-serif; 
+      background-color: #f5f5f5; 
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-theme { 
+      background-color: #1a1a1a; 
+      color: #f5f5f5; 
+    }
+
+    .navbar { 
+      background-color: #244576; 
+      color: white; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      padding: 10px 15px; 
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .navbar-title { 
+      font-weight: bold; 
+      font-size: 1.3rem; 
+    }
+  #back {
+    height: 20px;
+    width: 20px;
+    margin-top: 5px;
+  }
+  #rtn {
+      background-color: transparent;
+      color: #f0f0f0;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      margin-right: 20px;
+      padding-bottom: 10px;
+      width: 30px;
+      height: 30px;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .content { 
+      padding: 20px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 15px; 
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .settings-button {
+      border: none;
+      width: 100%;
+      padding: 15px;
+      background: #fff;
+      color: #244576;
+      font-weight: bold;
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .settings-button:hover { 
+      background: #f0f0f0; 
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .dark-theme .settings-button {
+      background: #2d2d2d;
+      color: #f5f5f5;
+    }
+    .dark-theme .settings-button:hover {
+      background: #3d3d3d;
+    }
+    .settings-button::after {
+      content: "›";
+      font-size: 1.5rem;
+      font-weight: normal;
+    }
+
+    /* Modal */
+    .modal-container { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      display: none; 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 1000; 
+    }
+    .modal-backdrop { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(0, 0, 0, 0.5); 
+      animation: fadeIn 0.3s ease;
+    }
+    .modal { 
+      background: white; 
+      padding: 25px; 
+      border-radius: 12px; 
+      z-index: 1001; 
+      width: 90%; 
+      max-width: 400px; 
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+    .dark-theme .modal { 
+      background: #2d2d2d; 
+      color: #f5f5f5; 
+    }
+    .modal h3 { 
+      margin-top: 0; 
+      margin-bottom: 20px;
+      text-align: center; 
+      color: #244576;
+    }
+    .dark-theme .modal h3 {
+      color: #f5f5f5;
+    }
+    .modal-content {
+      margin-bottom: 20px;
+    }
+    .modal-buttons { 
+      display: flex; 
+      justify-content: flex-end; 
+      gap: 10px; 
+      margin-top: 20px; 
+    }
+    .modal-buttons button { 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 6px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      transition: opacity 0.2s;
+    }
+    .modal-buttons button:hover {
+      opacity: 0.9;
+    }
+    .cancel { 
+      background: #aaa; 
+      color: #fff; 
+    }
+    .apply { 
+      background: #244576; 
+      color: #fff; 
+    }
+    .delete-btn {
+      background: #d32f2f;
+      color: #fff;
+    }
+    
+    /* Form elements */
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 15px 0;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .radio-option:hover {
+      background: #f0f0f0;
+    }
+    .dark-theme .radio-option:hover {
+      background: #3d3d3d;
+    }
+    .radio-option input[type="radio"] {
+      margin: 0;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+    }
+    .dark-theme textarea {
+      background: #3d3d3d;
+      color: #f5f5f5;
+      border-color: #555;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { 
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <span class="navbar-title">      <button id="rtn" onclick="redirectTo()"><img id="back" src="https://cdn-user-icons.flaticon.com/211821/211821484/1755821583470.svg?token=exp=1755822730~hmac=43cb91eab1d16459e5368e958b837025"></button>Settings</span>
+    <!-- <div id="auth-status" style="font-size: 0.8rem; color: #ccc;">
+      Loading...-->
+    </div>
+  </div>
+  
+  <div class="content">
+    <button class="settings-button" onclick="openModal('modal-theme')">Theme Settings</button>
+    <button class="settings-button" onclick="openModal('modal-status')">Status</button>
+    <button class="settings-button" onclick="openModal('modal-delete')">Delete Account</button>
+    <button class="settings-button" onclick="openModal('modal-report')">Report a Problem</button>
+  </div>
+
+  <!-- Theme Modal -->
+  <div id="modal-theme" class="modal-container">
+    <div class="modal-backdrop" onclick="closeModal('modal-theme')"></div>
+    <div class="modal">
+      <h3>Select Theme</h3>
+      <div class="modal-content">
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="theme" value="light" checked>
+            Light Theme
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="theme" value="dark">
+            Dark Theme
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="theme" value="auto">
+            Auto (System Preference)
+          </label>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal('modal-theme')">Cancel</button>
+        <button class="apply" onclick="applyTheme()">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Modal -->
+  <div id="modal-status" class="modal-container">
+    <div class="modal-backdrop" onclick="closeModal('modal-status')"></div>
+    <div class="modal">
+      <h3>Change Status</h3>
+      <div class="modal-content">
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="status" value="available" checked>
+            Available
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="status" value="busy">
+            Busy
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="status" value="away">
+            Away
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="status" value="offline">
+            Appear Offline
+          </label>
+        </div>
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal('modal-status')">Cancel</button>
+        <button class="apply" onclick="saveStatus()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div id="modal-delete" class="modal-container">
+    <div class="modal-backdrop" onclick="closeModal('modal-delete')"></div>
+    <div class="modal">
+      <h3>Delete Account</h3>
+      <div class="modal-content">
+        <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+        <p>All your data will be permanently removed.</p>
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal('modal-delete')">Cancel</button>
+        <button class="delete-btn" onclick="deleteAccount()">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="modal-report" class="modal-container">
+    <div class="modal-backdrop" onclick="closeModal('modal-report')"></div>
+    <div class="modal">
+      <h3>Report a Problem</h3>
+      <div class="modal-content">
+        <textarea id="problem-description" placeholder="Please describe the problem in detail..."></textarea>
+      </div>
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal('modal-report')">Cancel</button>
+        <button class="apply" onclick="sendReport()">Send Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+
+  <script>
+    // Replace with your Firebase project's config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // Firebase theme functions
+    function saveThemeToFirebase(themeName) {
+      const user = auth.currentUser;
+      if (user) {
+        db.collection("users").doc(user.uid).set({
+          theme: themeName,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true })
+        .then(() => {
+          console.log("Theme successfully saved to Firebase!");
+        })
+        .catch((error) => {
+          console.error("Error saving theme: ", error);
+          // Fallback to local storage
+          localStorage.setItem('theme', themeName);
+        });
+      } else {
+        // Not signed in, use local storage
+        localStorage.setItem('theme', themeName);
+      }
+    }
+  function redirectTo() {
+      window.location.href = "chat.html";
+    }
+
+    function loadThemeFromFirebase() {
+      const user = auth.currentUser;
+      if (user) {
+        db.collection("users").doc(user.uid).get()
+        .then((doc) => {
+          if (doc.exists) {
+            const userData = doc.data();
+            if (userData.theme) {
+              setTheme(userData.theme);
+              // Update radio button selection
+              document.querySelector(`input[name="theme"][value="${userData.theme}"]`).checked = true;
+            }
+          } else {
+            // No theme saved in Firebase, use local storage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+          }
+        })
+        .catch((error) => {
+          console.error("Error getting theme: ", error);
+          // Fallback to local storage
+          const savedTheme = localStorage.getItem('theme') || 'light';
+          setTheme(savedTheme);
+        });
+      } else {
+        // User not logged in, use local storage
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+      }
+    }
+    
+    // Set theme function
+    function setTheme(themeName) {
+      // Remove all theme classes
+      document.body.classList.remove('dark-theme');
+      
+      if (themeName === 'dark') {
+        document.body.classList.add('dark-theme');
+      } else if (themeName === 'auto') {
+        // Auto theme based on system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.body.classList.add('dark-theme');
+        }
+      }
+      
+      // Always save to local storage as fallback
+      localStorage.setItem('theme', themeName);
+    }
+    
+    function updateAuthStatus(user) {
+      const authStatus = document.getElementById('auth-status');
+      if (user) {
+        authStatus.textContent = `Logged in as ${user.email}`;
+        authStatus.style.color = '#aaffaa';
+      } else {
+        authStatus.textContent = 'Not logged in';
+        authStatus.style.color = '#ffaaaa';
+      }
+    }
+  </script>
+
+  <script>
+    // Modal functions
+    function openModal(id) {
+      document.getElementById(id).style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+      document.body.style.overflow = 'auto'; // Re-enable scrolling
+    }
+    
+    // Theme functions
+    function applyTheme() {
+      const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+      setTheme(selectedTheme);
+      saveThemeToFirebase(selectedTheme);
+      closeModal('modal-theme');
+    }
+    
+    // Status functions
+    function saveStatus() {
+      const selectedStatus = document.querySelector('input[name="status"]:checked').value;
+      // In a real app, you would save this to a database
+      alert(`Status changed to: ${selectedStatus}`);
+      closeModal('modal-status');
+    }
+    
+    // Delete account function
+    function deleteAccount() {
+      if (confirm("Are you absolutely sure? This cannot be undone!")) {
+        // In a real app, you would make an API call to delete the account
+        alert('Account deleted successfully!');
+        closeModal('modal-delete');
+      }
+    }
+    
+    // Report function
+    function sendReport() {
+      const problemText = document.getElementById('problem-description').value;
+      if (!problemText.trim()) {
+        alert('Please describe the problem before submitting.');
+        return;
+      }
+      
+      // In a real app, you would send this to your backend
+      alert('Thank you for your feedback! We will review your report soon.');
+      document.getElementById('problem-description').value = '';
+      closeModal('modal-report');
+    }
+    
+    // Initialize theme from localStorage if available
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set up auth state listener
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          // User is signed in, load theme from Firebase
+          console.log("User is signed in:", user.uid);
+          updateAuthStatus(user);
+          loadThemeFromFirebase();
+        } else {
+          // User is signed out, use local storage
+          console.log("User is signed out");
+          updateAuthStatus(null);
+          const savedTheme = localStorage.getItem('theme') || 'light';
+          setTheme(savedTheme);
+          
+          // Update radio button selection
+          document.querySelector(`input[name="theme"][value="${savedTheme}"]`).checked = true;
+        }
+      });
+
+      // Listen for system theme changes if auto theme is selected
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'auto' || !savedTheme) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+          if (savedTheme === 'auto' || !savedTheme) {
+            document.body.classList.toggle('dark-theme', e.matches);
+          }
+        });
+      }
+    });
+    
+    // Close modal when pressing Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const openModals = document.querySelectorAll('.modal-container[style="display: flex;"]');
+        openModals.forEach(modal => {
+          closeModal(modal.id);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

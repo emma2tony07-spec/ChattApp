@@ -3,6 +3,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Notifications (Receive Only)</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     :root{
       --primary:#244576; /* requested color */
@@ -97,6 +99,15 @@
   .fade-in{animation:fade .3s ease-out}
   @keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
 }
+  #backBtn {
+    color: #244576;
+    background-color: transparent;
+    border: none;
+    height: 10px;
+  }
+  i {
+    font-size: 20px;
+  }
 
   </style>
 </head>
@@ -104,6 +115,7 @@
   <!-- Navbar -->
   <header class="navbar" role="navigation" aria-label="Main">
     <div class="brand" aria-label="App brand">
+      <span> <button id="backBtn" onclick="goback()"><i class="fas fa-arrow-left"></i></button></span>
       <span class="dot" aria-hidden="true"></span>
       <span>NotifyCenter</span>
     </div><div style="display:flex; align-items:center; gap:.5rem">
@@ -153,6 +165,9 @@
       'Backup completed successfully.',
       'Reminder: Meeting starts in 15 minutes.'
     ];
+  function goback() { 
+    window.location.href = "chat.html"
+  }
 
     function fmtTime(d=new Date()){
       return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
